@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using AppLanches.Services;
+using Microsoft.Extensions.Logging;
 
 namespace AppLanches;
 
@@ -19,6 +20,7 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
         builder.Services.AddHttpClient();
+        builder.Services.AddSingleton<ApiService>();
 
         return builder.Build();
     }

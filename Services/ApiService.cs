@@ -9,7 +9,7 @@ namespace AppLanches.Services
     public class ApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl = "https://lf3jvkgb-7066.brs.devtunnels.ms/";
+        private readonly string _baseUrl = "https://www.appsnacks2025.somee.com/";
         private readonly ILogger<ApiService> _logger;
 
         JsonSerializerOptions _serializerOptions;
@@ -31,16 +31,16 @@ namespace AppLanches.Services
             {
                 var register = new Register()
                 {
-                    Nome = nome,
+                    Name = nome,
                     Email = email,
-                    Telefone = telefone,
-                    Senha = password
+                    Phone = telefone,
+                    Password = password
                 };
 
                 var json = JsonSerializer.Serialize(register, _serializerOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await PostRequest("api/Usuarios/Register", content);
+                var response = await PostRequest("api/Users/Register", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -66,13 +66,13 @@ namespace AppLanches.Services
                 var login = new Login()
                 {
                     Email = email,
-                    Senha = password
+                    Password = password
                 };
 
                 var json = JsonSerializer.Serialize(login, _serializerOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await PostRequest("api/Usuarios/Login", content);
+                var response = await PostRequest("api/Users/Login", content);
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogError($"Erro ao enviar requisição HTTP : {response.StatusCode}");
@@ -99,7 +99,9 @@ namespace AppLanches.Services
         }
         private async Task<HttpResponseMessage> PostRequest(string uri, HttpContent content)
         {
-            var enderecoUrl = _baseUrl + uri;
+            //var enderecoUrl = _baseUrl + uri;
+            var enderecoUrl = $"{_baseUrl.TrimEnd('/')}/{uri.TrimStart('/')}";
+
             try
             {
                 var result = await _httpClient.PostAsync(enderecoUrl, content);

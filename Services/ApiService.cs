@@ -125,6 +125,13 @@ namespace AppLanches.Services
             return await GetAsync<List<Product>>(endpoint);
         }
 
+        public async Task<(Product? ProdutoDetalhe, string? ErrorMessage)> GetProdutoDetalhe(int produtoId)
+        {
+            string endpoint = $"api/products/{produtoId}";
+            return await GetAsync<Product>(endpoint);
+        }
+
+
         private async Task<(T? Data, string? ErrorMessage)> GetAsync<T>(string endpoint)
         {
             try

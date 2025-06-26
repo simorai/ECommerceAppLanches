@@ -15,6 +15,11 @@ public partial class LoginPage : ContentPage
         _validator = validator;
     }
 
+    private async void TapRegister_Tapped(object sender, TappedEventArgs e)
+    {
+        await Navigation.PushAsync(new InscricaoPage(_apiService, _validator));
+    }
+
     private async void BtnSignIn_Clicked(object sender, EventArgs e)
     {
         if (string.IsNullOrEmpty(EntEmail.Text))
@@ -39,12 +44,5 @@ public partial class LoginPage : ContentPage
         {
             await DisplayAlert("Erro", "Algo deu errado", "Cancelar");
         }
-
-    }
-
-    private async void TapRegister_Tapped(object sender, TappedEventArgs e)
-    {
-        await Navigation.PushAsync(new InscricaoPage(_apiService, _validator));
-
     }
 }

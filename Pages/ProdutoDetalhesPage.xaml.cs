@@ -122,11 +122,11 @@ public partial class ProdutoDetalhesPage : ContentPage
         {
             var carrinhoCompra = new CarrinhoCompra()
             {
-                Quantidade = Convert.ToInt32(LblQuantidade.Text),
-                Preco = Convert.ToDecimal(LblProdutoPreco.Text),
-                ValorTotal = Convert.ToDecimal(LblPrecoTotal.Text),
-                ProdutoId = _produtoId,
-                ClienteId = Preferences.Get("usuarioid", 0)
+                quantity = Convert.ToInt32(LblQuantidade.Text),
+                unitPrice = Convert.ToDecimal(LblProdutoPreco.Text),
+                total = Convert.ToDecimal(LblPrecoTotal.Text),
+                productId = _produtoId,
+                clientId = Preferences.Get("usuarioid", 0)
             };
             var response = await _apiService.AdicionaItemNoCarrinho(carrinhoCompra);
             if (response.Data)

@@ -10,7 +10,7 @@ namespace AppLanches.Services
     public class ApiService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl = "https://www.appsnacks2025.somee.com/Api/";
+        private readonly string _baseUrl = "https://www.appsnacks2025.somee.com";
         private readonly ILogger<ApiService> _logger;
         JsonSerializerOptions _serializerOptions;
 
@@ -83,10 +83,11 @@ namespace AppLanches.Services
                 }
 
                 var jsonResult = await response.Content.ReadAsStringAsync();
+
                 var result = JsonSerializer.Deserialize<Token>(jsonResult, _serializerOptions);
 
                 Preferences.Set("accesstoken", result!.AccessToken);
-                Preferences.Set("usuarioid", (int)result.UserId!);
+                Preferences.Set("usuarioid", (int)result.UserId!); // had to implement because the login was not working
                 Preferences.Set("usuarionome", result!.UserName ?? "");
 
                 return new ApiResponse<bool> { Data = true };
@@ -158,6 +159,72 @@ namespace AppLanches.Services
             string endpoint = $"api/products/{produtoId}";
             return await GetAsync<Product>(endpoint);
         }
+
+        //public async Task<(List<CarrinhoCompraItem>? CarrinhoCompraItems, string? ErrorMessage)> GetItensCarrinhoCompra(int usuarioId)
+        //{
+        //    var endpoint = $"api/ShoppingCartItems/{usuarioId}";
+        //    return await GetAsync<List<CarrinhoCompraItem>>(endpoint);
+        //}
+        public async Task<(List<CarrinhoCompraItem>? CarrinhoCompraItems, string? ErrorMessage)> GetItensCarrinhoCompra(int usuarioId)
+        {
+            try
+            {
+                // basic validation for usuarioId
+                if (usuarioId <= 0)
+                {
+                    return (null, "Usuário não autenticado ou ID inválido.");
+                }
+
+                AddAuthorizationHeader();
+
+
+                var endpoint = $"{_baseUrl}/api/ShoppingCartItems/{usuarioId}";
+
+                var response = await _httpClient.GetAsync(endpoint);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = await response.Content.ReadAsStringAsync();
+                    var items = JsonSerializer.Deserialize<List<CarrinhoCompraItem>>(responseString, _serializerOptions);
+                    return (items, null);
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogWarning("Unauthorized");
+                    return (null, "Unauthorized");
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    // No items found for the user
+                    return (new List<CarrinhoCompraItem>(), null);
+                }
+                else
+                {
+                    var errorMsg = $"Erro na requisição: {response.ReasonPhrase}";
+                    _logger.LogError(errorMsg);
+                    return (null, errorMsg);
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                var errorMsg = $"Erro de requisição HTTP: {ex.Message}";
+                _logger.LogError(ex, errorMsg);
+                return (null, errorMsg);
+            }
+            catch (JsonException ex)
+            {
+                var errorMsg = $"Erro de desserialização JSON: {ex.Message}";
+                _logger.LogError(ex, errorMsg);
+                return (null, errorMsg);
+            }
+            catch (Exception ex)
+            {
+                var errorMsg = $"Erro inesperado: {ex.Message}";
+                _logger.LogError(ex, errorMsg);
+                return (null, errorMsg);
+            }
+        }
+
 
 
         private async Task<(T? Data, string? ErrorMessage)> GetAsync<T>(string endpoint)

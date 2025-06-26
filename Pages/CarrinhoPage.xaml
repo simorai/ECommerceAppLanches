@@ -46,14 +46,14 @@
                                    HorizontalOptions="Start"
                                    VerticalOptions="Center"
                                    FontAttributes="Bold"
-                                   Text="{Binding ProdutoNome}"/>
+                                   Text="{Binding ProductName}"/>
 
                             <Label Grid.Row="1"
                                    Grid.Column="1"
                                    HorizontalOptions="Start"
                                    VerticalOptions="Center"
                                    FontAttributes="Bold"
-                                   Text="{Binding Preco,StringFormat='R$ {0:F2}'}"/>
+                                   Text="{Binding Price,StringFormat='R$ {0:F2}'}"/>
 
                             <HorizontalStackLayout Grid.Row="2"
                                                    Grid.Column="1"
@@ -78,7 +78,7 @@
                                        TextColor="#80574D"
                                        FontAttributes="Bold"
                                        VerticalTextAlignment="Center"
-                                       Text="{Binding Quantidade}"/>
+                                       Text="{Binding Quantity}"/>
 
                                 <Button HeightRequest="25"
                                         WidthRequest="25"

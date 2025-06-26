@@ -26,6 +26,21 @@ public partial class CarrinhoPage : ContentPage
     {
         base.OnAppearing();
         await GetItensCarrinhoCompra();
+
+        bool enderecoSalvo = Preferences.ContainsKey("endereco");
+        if (enderecoSalvo)
+        {
+            string nome = Preferences.Get("nome", string.Empty);
+            string endereco = Preferences.Get("endereco", string.Empty);
+            string telefone = Preferences.Get("telefone", string.Empty);
+
+            //formatar os dados conforme desejado no layout
+            LblEndereco.Text = $"{nome}\n{endereco}\n{telefone}";
+        }
+        else
+        {
+            LblEndereco.Text = "Informe o endenreco";
+        }
     }
 
     private async Task<bool> GetItensCarrinhoCompra()
@@ -85,23 +100,50 @@ public partial class CarrinhoPage : ContentPage
         await Navigation.PushAsync(new LoginPage(_apiService, _validator));
     }
 
-    private void BtnDecrementar_Clicked(object sender, EventArgs e)
+    private async void BtnDecrementar_Clicked(object sender, EventArgs e)
     {
+        if (sender is Button button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
+        {
+            if (itemCarrinho.Quantidade == 1) return;
+            else
+            {
+                itemCarrinho.Quantidade--;
+                AtualizaPrecoTotal();
+                await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "diminuir");
+            }
+        }
+
+    }
+
+    private async void BtnIncrementar_Clicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
+        {
+            itemCarrinho.Quantidade++;
+            AtualizaPrecoTotal();
+            await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "aumentar");
+        }
 
     }
 
     private void BtnEditaEndereco_Clicked(object sender, EventArgs e)
     {
-
+        Navigation.PushAsync(new EnderecoPage());
     }
 
-    private void BtnDeletar_Clicked(object sender, EventArgs e)
+    private async void BtnDeletar_Clicked(object sender, EventArgs e)
     {
-
-    }
-
-    private void BtnIncrementar_Clicked(object sender, EventArgs e)
-    {
+        if (sender is ImageButton button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
+        {
+            bool resposta = await DisplayAlert("Confirma  o",
+                          "Tem certeza que deseja excluir este item do carrinho?", "Sim", "N o");
+            if (resposta)
+            {
+                ItensCarrinhoCompra.Remove(itemCarrinho);
+                AtualizaPrecoTotal();
+                await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "deletar");
+            }
+        }
 
     }
 
@@ -109,4 +151,5 @@ public partial class CarrinhoPage : ContentPage
     {
 
     }
+
 }

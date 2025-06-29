@@ -9,7 +9,7 @@ namespace AppLanches.Models
         public decimal Price { get; set; }
         public decimal Total { get; set; }
         private int _quantity;
-        public int Quantidade
+        public int Quantity
         {
             get { return _quantity; }
             set

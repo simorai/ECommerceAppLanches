@@ -9,6 +9,7 @@ public partial class HomePage : ContentPage
     private readonly ApiService _apiService;
     private readonly IValidator _validator;
     private bool _loginPageDisplayed = false;
+    private bool _isDataLoaded = false;
 
     public HomePage(ApiService apiService, IValidator validator)
     {
@@ -113,11 +114,27 @@ public partial class HomePage : ContentPage
 
     protected override async void OnAppearing()
     {
+        // onappearing is called every time the page appears, so we check if data is already loaded
         base.OnAppearing();
+        if (!_isDataLoaded)
+        {
+            // If data is not loaded, we load it
+            await LoadDataAsync();
+            _isDataLoaded = true;
+        }
+
         LblNomeUsuario.Text = "Olá, " + Preferences.Get("usuarionome", string.Empty);
-        await GetListaCategorias();
-        await GetMaisVendidos();
-        await GetPopulares();
+        //await GetListaCategorias();
+        //await GetMaisVendidos();
+        //await GetPopulares();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var categoriasTask = GetListaCategorias();
+        var maisVendidosTask = GetMaisVendidos();
+        var popularesTask = GetPopulares();
+        await Task.WhenAll(categoriasTask, maisVendidosTask, popularesTask);
     }
 
     private void CvCategorias_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -25,22 +25,55 @@ public partial class CarrinhoPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await GetItensCarrinhoCompra();
 
+        if (IsNavigatingToEmptyCartPage()) return;
+
+        bool hasItems = await GetItensCarrinhoCompra();
+
+        if (hasItems)
+        {
+            ExibirEndereco();
+        }
+        else
+        {
+            await NavegarParaCarrinhoVazio();
+        }
+    }
+
+    private bool IsNavigatingToEmptyCartPage()
+    {
+        if (_isNavigatingToEmptyCartPage)
+        {
+            _isNavigatingToEmptyCartPage = false;
+            return true;
+        }
+        return false;
+    }
+
+    private void ExibirEndereco()
+    {
         bool enderecoSalvo = Preferences.ContainsKey("endereco");
+
         if (enderecoSalvo)
         {
             string nome = Preferences.Get("nome", string.Empty);
             string endereco = Preferences.Get("endereco", string.Empty);
             string telefone = Preferences.Get("telefone", string.Empty);
 
-            //formatar os dados conforme desejado no layout
-            LblEndereco.Text = $"{nome}\n{endereco}\n{telefone}";
+            // Formatar os dados conforme desejado na label
+            LblEndereco.Text = $"{nome}\n{endereco} \n{telefone}";
         }
         else
         {
-            LblEndereco.Text = "Informe o endenreco";
+            LblEndereco.Text = "Informe o seu endereço";
         }
+    }
+
+    private async Task NavegarParaCarrinhoVazio()
+    {
+        LblEndereco.Text = string.Empty;
+        _isNavigatingToEmptyCartPage = true;
+        await Navigation.PushAsync(new CarrinhoVazioPage());
     }
 
     private async Task<bool> GetItensCarrinhoCompra()
@@ -53,7 +86,7 @@ public partial class CarrinhoPage : ContentPage
 
             if (errorMessage == "Unauthorized" && !_loginPageDisplayed)
             {
-                // Redirecionar para a página de login
+                // Redirecionar para a p?gina de login
                 await DisplayLoginPage();
                 return false;
             }
@@ -65,13 +98,20 @@ public partial class CarrinhoPage : ContentPage
             }
 
             ItensCarrinhoCompra.Clear();
+
             foreach (var item in itensCarrinhoCompra)
             {
                 ItensCarrinhoCompra.Add(item);
             }
 
             CvCarrinho.ItemsSource = ItensCarrinhoCompra;
-            return true; // Correctly return a boolean value
+            AtualizaPrecoTotal(); // Atualizar o preco total ap?s atualizar os itens do carrinho
+
+            if (!ItensCarrinhoCompra.Any())
+            {
+                return false;
+            }
+            return true;
         }
         catch (Exception ex)
         {
@@ -80,12 +120,11 @@ public partial class CarrinhoPage : ContentPage
         }
     }
 
-
     private void AtualizaPrecoTotal()
     {
         try
         {
-            var precoTotal = ItensCarrinhoCompra.Sum(item => item.Price * item.Quantidade);
+            var precoTotal = ItensCarrinhoCompra.Sum(item => item.Price * item.Quantity);
             LblPrecoTotal.Text = precoTotal.ToString();
         }
         catch (Exception ex)
@@ -104,26 +143,24 @@ public partial class CarrinhoPage : ContentPage
     {
         if (sender is Button button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
         {
-            if (itemCarrinho.Quantidade == 1) return;
+            if (itemCarrinho.Quantity == 1) return;
             else
             {
-                itemCarrinho.Quantidade--;
+                itemCarrinho.Quantity--;
                 AtualizaPrecoTotal();
                 await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "diminuir");
             }
         }
-
     }
 
     private async void BtnIncrementar_Clicked(object sender, EventArgs e)
     {
         if (sender is Button button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
         {
-            itemCarrinho.Quantidade++;
+            itemCarrinho.Quantity++;
             AtualizaPrecoTotal();
             await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "aumentar");
         }
-
     }
 
     private void BtnEditaEndereco_Clicked(object sender, EventArgs e)
@@ -135,8 +172,8 @@ public partial class CarrinhoPage : ContentPage
     {
         if (sender is ImageButton button && button.BindingContext is CarrinhoCompraItem itemCarrinho)
         {
-            bool resposta = await DisplayAlert("Confirma  o",
-                          "Tem certeza que deseja excluir este item do carrinho?", "Sim", "N o");
+            bool resposta = await DisplayAlert("Confirma o",
+                          "Tem certeza que deseja excluir este item do carrinho?", "Sim", "Nao");
             if (resposta)
             {
                 ItensCarrinhoCompra.Remove(itemCarrinho);
@@ -144,12 +181,49 @@ public partial class CarrinhoPage : ContentPage
                 await _apiService.AtualizaQuantidadeItemCarrinho(itemCarrinho.ProdutoId, "deletar");
             }
         }
-
     }
 
-    private void TapConfirmarPedido_Tapped(object sender, TappedEventArgs e)
+    private async void TapConfirmarPedido_Tapped(object sender, TappedEventArgs e)
     {
+        if (ItensCarrinhoCompra == null || !ItensCarrinhoCompra.Any())
+        {
+            await DisplayAlert("Informação", "Seu carrinho está vazio ou o pedido já foi confirmado.", "OK");
+            return;
+        }
 
+        // Validação do valor do total antes de converter
+        decimal total = 0;
+        if (string.IsNullOrWhiteSpace(LblPrecoTotal.Text) || !decimal.TryParse(LblPrecoTotal.Text, out total))
+        {
+            await DisplayAlert("Erro", "O valor total do pedido é inválido.", "OK");
+            return;
+        }
+
+        var pedido = new Pedido()
+        {
+            Address = LblEndereco.Text,
+            UserId = Preferences.Get("usuarioid", 0),
+            Total = total // Usa o valor validado
+        };
+
+        var response = await _apiService.ConfirmarPedido(pedido);
+
+        if (response.HasError)
+        {
+            if (response.ErrorMessage == "Unauthorized")
+            {
+                // Redirecionar para a página de login
+                await DisplayLoginPage();
+                return;
+            }
+            await DisplayAlert("Opa !!!", $"Algo deu errado: {response.ErrorMessage}", "Cancelar");
+            return;
+        }
+
+        ItensCarrinhoCompra.Clear();
+        LblEndereco.Text = "Informe o seu endereço";
+        LblPrecoTotal.Text = "0.00";
+
+        await Navigation.PushAsync(new PedidoConfirmadoPage());
     }
-
 }

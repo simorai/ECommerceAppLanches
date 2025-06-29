@@ -179,6 +179,33 @@ namespace AppLanches.Services
             }
         }
 
+        public async Task<ApiResponse<bool>> ConfirmarPedido(Pedido pedido)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(pedido, _serializerOptions);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await PostRequest("api/Orders", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = response.StatusCode == HttpStatusCode.Unauthorized
+                        ? "Unauthorized"
+                        : $"Erro ao enviar requisição HTTP: {response.StatusCode}";
+
+                    _logger.LogError($"Erro ao enviar requisição HTTP: {response.StatusCode}");
+                    return new ApiResponse<bool> { ErrorMessage = errorMessage };
+                }
+                return new ApiResponse<bool> { Data = true };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Erro ao confirmar pedido: {ex.Message}");
+                return new ApiResponse<bool> { ErrorMessage = ex.Message };
+            }
+        }
+
 
         private async Task<HttpResponseMessage> PostRequest(string uri, HttpContent content)
         {
@@ -212,12 +239,6 @@ namespace AppLanches.Services
             string endpoint = $"api/products/{produtoId}";
             return await GetAsync<Product>(endpoint);
         }
-
-        //public async Task<(List<CarrinhoCompraItem>? CarrinhoCompraItems, string? ErrorMessage)> GetItensCarrinhoCompra(int usuarioId)
-        //{
-        //    var endpoint = $"api/ShoppingCartItems/{usuarioId}";
-        //    return await GetAsync<List<CarrinhoCompraItem>>(endpoint);
-        //}
 
         public async Task<(List<CarrinhoCompraItem>? CarrinhoCompraItems, string? ErrorMessage)> GetItensCarrinhoCompra(int usuarioId)
         {
@@ -279,8 +300,6 @@ namespace AppLanches.Services
             }
         }
 
-
-
         private async Task<(T? Data, string? ErrorMessage)> GetAsync<T>(string endpoint)
         {
             try
@@ -328,10 +347,6 @@ namespace AppLanches.Services
                 return (default, errorMessage);
             }
         }
-
-
-
-
 
         private void AddAuthorizationHeader()
         {

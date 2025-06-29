@@ -10,6 +10,9 @@ public partial class ProdutoDetalhesPage : ContentPage
     private readonly IValidator _validator;
     private int _produtoId;
     private bool _loginPageDisplayed = false;
+    private FavoritosService _favoritosService = new FavoritosService();
+    //private FavoritosService _favoritosService;
+    private string? _imagemUrl;
 
     public ProdutoDetalhesPage(int produtoId, string produtoNome, ApiService apiService, IValidator validator)
     {
@@ -25,6 +28,7 @@ public partial class ProdutoDetalhesPage : ContentPage
     {
         base.OnAppearing();
         await GetProdutoDetalhes(_produtoId);
+        AtualizaFavoritoButton();
     }
 
     private async Task<Product?> GetProdutoDetalhes(int produtoId)
@@ -53,6 +57,7 @@ public partial class ProdutoDetalhesPage : ContentPage
             LblProdutoPreco.Text = produtoDetalhe.Price.ToString();
             LblProdutoDescricao.Text = produtoDetalhe.Details;
             LblPrecoTotal.Text = produtoDetalhe.Price.ToString();
+            _imagemUrl = produtoDetalhe.CaminhoImagem;
         }
         else
         {
@@ -69,9 +74,46 @@ public partial class ProdutoDetalhesPage : ContentPage
         await Navigation.PushAsync(new LoginPage(_apiService, _validator));
     }
 
-    private void ImagemBtnFavorito_Clicked(object sender, EventArgs e)
+    private async void ImagemBtnFavorito_Clicked(object sender, EventArgs e)
     {
+        try
+        {
+            var existeFavorito = await _favoritosService.ReadAsync(_produtoId);
+            if (existeFavorito is not null)
+            {
+                await _favoritosService.DeleteAsync(existeFavorito);
+            }
+            else
+            {
+                var produtoFavorito = new ProdutoFavorito()
+                {
+                    ProductId = _produtoId,
+                    IsFavorite = true,
+                    Details = LblProdutoDescricao.Text,
+                    Name = LblProdutoNome.Text,
+                    Price = Convert.ToDecimal(LblProdutoPreco.Text),
+                    ImageUrl = _imagemUrl
+                };
 
+                await _favoritosService.CreateAsync(produtoFavorito);
+            }
+            AtualizaFavoritoButton();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Erro", $"Ocorreu um erro: {ex.Message}", "OK");
+        }
+    }
+
+    private async void AtualizaFavoritoButton()
+    {
+        var existeFavorito = await
+               _favoritosService.ReadAsync(_produtoId);
+
+        if (existeFavorito is not null)
+            ImagemBtnFavorito.Source = "heartfill";
+        else
+            ImagemBtnFavorito.Source = "heart";
     }
 
     private void BtnRemove_Clicked(object sender, EventArgs e)
@@ -92,7 +134,6 @@ public partial class ProdutoDetalhesPage : ContentPage
             // Tratar caso as convers es falhem
             DisplayAlert("Erro", "Valores inv lidos", "OK");
         }
-
     }
 
     private void BtnAdiciona_Clicked(object sender, EventArgs e)
@@ -113,7 +154,6 @@ public partial class ProdutoDetalhesPage : ContentPage
             // Tratar caso as conversoes falhem
             DisplayAlert("Erro", "Valores inv lidos", "OK");
         }
-
     }
 
     private async void BtnIncluirNoCarrinho_Clicked(object sender, EventArgs e)
@@ -143,6 +183,5 @@ public partial class ProdutoDetalhesPage : ContentPage
         {
             await DisplayAlert("Erro", $"Ocorreu um erro: {ex.Message}", "OK");
         }
-
     }
 }

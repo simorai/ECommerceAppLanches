@@ -131,7 +131,7 @@ namespace AppLanches.Services
             try
             {
                 var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
-                var response = await PutRequest($"api/ItensCarrinhoCompra?produtoId={produtoId}&acao={acao}", content);
+                var response = await PutRequest($"api/ShoppingCartItems?productId={produtoId}&acao={acao}", content);
                 if (response.IsSuccessStatusCode)
                 {
                     return (true, null);
@@ -225,12 +225,12 @@ namespace AppLanches.Services
 
         public async Task<(List<Category>? Categorias, string? ErrorMessage)> GetCategorias()
         {
-            return await GetAsync<List<Category>>("api/Categories");
+            return await GetAsync<List<Category>>("api/categories");
         }
 
         public async Task<(List<Product>? Produtos, string? ErrorMessage)> GetProdutos(string tipoProduto, string categoriaId)
         {
-            string endpoint = $"api/Products?Search={tipoProduto}&categoryId={categoriaId}";
+            string endpoint = $"api/products?Search={tipoProduto}&categoryId={categoriaId}";
             return await GetAsync<List<Product>>(endpoint);
         }
 
@@ -307,6 +307,23 @@ namespace AppLanches.Services
             return await GetAsync<ImagemPerfil>(endpoint);
         }
 
+        public async Task<(List<PedidoDetalhe>?, string? ErrorMessage)> GetPedidoDetalhes(int pedidoId)
+        {
+            string endpoint = $"api/orders/GetOrderDetails/{pedidoId}";
+
+            return await GetAsync<List<PedidoDetalhe>>(endpoint);
+        }
+
+        public async Task<(List<PedidoPorUsuario>?, string? ErrorMessage)> GetPedidosPorUsuario(int usuarioId)
+        {
+
+            string endpoint = $"api/Orders/GetOrdersByUser/{usuarioId}";
+
+            return await GetAsync<List<PedidoPorUsuario>>(endpoint);
+        }
+
+
+
 
         private async Task<(T? Data, string? ErrorMessage)> GetAsync<T>(string endpoint)
         {
@@ -371,7 +388,7 @@ namespace AppLanches.Services
             {
                 var content = new MultipartFormDataContent();
                 content.Add(new ByteArrayContent(imageArray), "imagem", "image.jpg");
-                var response = await PostRequest("api/usuarios/uploadfotousuario", content);
+                var response = await PostRequest("api/Users/UserImage", content);
 
                 if (!response.IsSuccessStatusCode)
                 {

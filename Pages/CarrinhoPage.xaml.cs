@@ -199,6 +199,7 @@ public partial class CarrinhoPage : ContentPage
             return;
         }
 
+        // Cria o objeto Pedido com os dados necessários
         var pedido = new Pedido()
         {
             Address = LblEndereco.Text,
@@ -225,5 +226,6 @@ public partial class CarrinhoPage : ContentPage
         LblPrecoTotal.Text = "0.00";
 
         await Navigation.PushAsync(new PedidoConfirmadoPage());
+
     }
 }

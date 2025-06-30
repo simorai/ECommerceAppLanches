@@ -23,6 +23,7 @@ namespace AppLanches
             var favoritosPage = new FavoritosPage(_apiService, _validator);
             var perfilPage = new PerfilPage(_apiService, _validator);
 
+
             Items.Add(new TabBar
             {
                 Items =

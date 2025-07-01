@@ -13,6 +13,7 @@
                    HorizontalOptions="Center"
                    VerticalOptions="Center" />
 
+
         <CollectionView x:Name="CvPedidos"
                   Margin="20"
                   SelectionMode="Single"

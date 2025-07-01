@@ -6,13 +6,14 @@ namespace AppLanches.Pages;
 
 public partial class FavoritosPage : ContentPage
 {
-    private readonly FavoritosService _favoritosService = new FavoritosService();
+    private readonly FavoritosService _favoritosService;
     private readonly ApiService _apiService;
     private readonly IValidator _validator;
 
     public FavoritosPage(ApiService apiService, IValidator validator)
     {
         InitializeComponent();
+        _favoritosService = ServiceFactory.CreateFavoritosService();
         _apiService = apiService;
         _validator = validator;
     }

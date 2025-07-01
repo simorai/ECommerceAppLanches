@@ -6,6 +6,14 @@
 
     <VerticalStackLayout>
 
+        <ActivityIndicator x:Name="loadIndicatorIndicator"
+                   IsRunning="false"
+                   IsVisible="false"
+                   Color="Blue"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center" />
+
+
         <ActivityIndicator x:Name="loadIndicator"
                            IsRunning="false"
                            IsVisible="false"
@@ -65,5 +73,6 @@
 
         </CollectionView>
     </VerticalStackLayout>
+
 
 </ContentPage>
